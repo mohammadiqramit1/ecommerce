@@ -5,9 +5,7 @@ import { MoveRight } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import axios from "../lib/axios";
 
-const stripePromise = loadStripe(
-	"pk_test_51KZYccCoOZF2UhtOwdXQl3vcizup20zqKqT9hVUIsVzsdBrhqbUI2fE0ZdEVLdZfeHjeyFXtqaNsyCJCmZWnjNZa00PzMAjlcL"
-);
+const stripePromise = loadStripe("pk_test_51Q3GqKgr4PNFBXCpGU5EelE2IYI976hFYJU3Pgkil23CvVcpmRDm7VEh1LUC7v10fLzag6nidyOYTDOqZfHe6pG00bqNUECSc");
 
 const OrderSummary = () => {
 	const { total, subtotal, coupon, isCouponApplied, cart } = useCartStore();
@@ -25,9 +23,7 @@ const OrderSummary = () => {
 		});
 
 		const session = res.data;
-		const result = await stripe.redirectToCheckout({
-			sessionId: session.id,
-		});
+		window.location.href = session.paymentURL;
 
 		if (result.error) {
 			console.error("Error:", result.error);

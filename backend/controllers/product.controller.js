@@ -153,3 +153,33 @@ async function updateFeaturedProductsCache() {
 		console.log("error in update cache function");
 	}
 }
+
+export const editProductDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, price, category, image } = req.body;
+		console.log(req.body, id);
+
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        // Update fields if provided
+        if (name !== undefined) product.name = name;
+        if (description !== undefined) product.description = description;
+        if (price !== undefined) product.price = price;
+        if (category !== undefined) product.category = category;
+        if (image !== undefined) product.image = image;
+
+        const updatedProduct = await product.save();
+
+        // Optionally update featured products cache if isFeatured or other relevant fields changed
+        await updateFeaturedProductsCache();
+
+        res.json(updatedProduct);
+    } catch (error) {
+        console.log("Error in editProductDetails controller", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};

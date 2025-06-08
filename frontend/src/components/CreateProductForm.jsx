@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { PlusCircle, Upload, Loader } from "lucide-react";
 import { useProductStore } from "../stores/useProductStore";
 
-const categories = ["jeans", "t-shirts", "shoes", "glasses", "jackets", "suits", "bags"];
+const categories = ["fans", "bulbs", "switches", "sockets-and-extension", "wires", "water-heaters"];
 
 const CreateProductForm = () => {
 	const [newProduct, setNewProduct] = useState({
@@ -20,7 +20,7 @@ const CreateProductForm = () => {
 		e.preventDefault();
 		try {
 			await createProduct(newProduct);
-			setNewProduct({ name: "", description: "", price: "", category: "", image: "" });
+			// setNewProduct({ name: "", description: "", price: "", category: "", image: "" });
 		} catch {
 			console.log("error creating a product");
 		}
@@ -30,13 +30,14 @@ const CreateProductForm = () => {
 		const file = e.target.files[0];
 		if (file) {
 			const reader = new FileReader();
-
+			console.log(reader);
 			reader.onloadend = () => {
 				setNewProduct({ ...newProduct, image: reader.result });
 			};
 
 			reader.readAsDataURL(file); // base64
 		}
+		console.log(newProduct);
 	};
 
 	return (
