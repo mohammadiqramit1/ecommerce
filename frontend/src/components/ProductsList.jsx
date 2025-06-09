@@ -1,15 +1,41 @@
 import { motion } from "framer-motion";
-import { Trash, Star } from "lucide-react";
+import { Trash, Star, EllipsisVertical } from "lucide-react";
 import { useProductStore } from "../stores/useProductStore";
+import { useState } from "react";
+import EditProductModal from "../components/EditProductForm";
 
 const ProductsList = () => {
-	const { deleteProduct, toggleFeaturedProduct, products } = useProductStore();
+	const { deleteProduct, toggleFeaturedProduct, products, editProductDetails } = useProductStore();
+	const [openMenuId, setOpenMenuId] = useState(null);
 
-	console.log("products", products);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editProduct, setEditProduct] = useState(null);
+
+    const openEditModal = (product) => {
+        setEditProduct(product);
+        setIsModalOpen(true);
+        setOpenMenuId(null);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setEditProduct(null);
+    };
+
+    const handleSave = async (updatedProduct) => {
+		try {
+			console.log(updatedProduct)
+			await editProductDetails(updatedProduct.id, updatedProduct);
+		} catch {
+			console.log("error creating a product");
+		}
+        closeModal();
+    };
 
 	return (
 		<motion.div
-			className='bg-gray-800 shadow-lg rounded-lg overflow-hidden max-w-4xl mx-auto'
+			className='bg-gray-800 shadow-lg rounded-lg overflow-visible max-w-7xl mx-auto'
 			initial={{ opacity: 0, y: 20 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.8 }}
@@ -77,9 +103,8 @@ const ProductsList = () => {
 							<td className='px-6 py-4 whitespace-nowrap'>
 								<button
 									onClick={() => toggleFeaturedProduct(product._id)}
-									className={`p-1 rounded-full ${
-										product.isFeatured ? "bg-yellow-400 text-gray-900" : "bg-gray-600 text-gray-300"
-									} hover:bg-yellow-500 transition-colors duration-200`}
+									className={`p-1 rounded-full ${product.isFeatured ? "bg-yellow-400 text-gray-900" : "bg-gray-600 text-gray-300"
+										} hover:bg-yellow-500 transition-colors duration-200`}
 								>
 									<Star className='h-5 w-5' />
 								</button>
@@ -91,11 +116,43 @@ const ProductsList = () => {
 								>
 									<Trash className='h-5 w-5' />
 								</button>
+								<div
+									onMouseEnter={() => setOpenMenuId(product._id)}
+									onMouseLeave={() => setOpenMenuId(null)}
+									className="inline-block relative"
+								>
+									<button
+										data-pid={product._id}
+										className='text-red-400 hover:text-red-300 relative'
+										style={{ position: "relative" }}
+									>
+										<EllipsisVertical className='h-5 w-5' color="#ffffff" />
+									</button>
+									{openMenuId === product._id && (
+										<div
+											className="absolute right-0 -top-[1px] mt-2 w-40 bg-gray-900 border border-gray-700 rounded shadow-lg z-50"
+											style={{ zIndex: 9999 }}
+										>
+											<ul>
+												<li onClick={() => openEditModal(product)}className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-white">
+													edit product
+												</li>
+											</ul>
+										</div>
+									)}
+								</div>
 							</td>
 						</tr>
 					))}
 				</tbody>
 			</table>
+
+           <EditProductModal
+                isOpen={isModalOpen}
+                product={editProduct}
+                onClose={closeModal}
+                onSave={handleSave}
+            />
 		</motion.div>
 	);
 };
