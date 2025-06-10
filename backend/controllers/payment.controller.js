@@ -1,6 +1,7 @@
 import Coupon from "../models/coupon.model.js";
 import Order from "../models/order.model.js";
 import { stripe } from "../lib/stripe.js";
+import { razorpay } from "../lib/razorpay.js"; // Assuming you have a Razorpay instance set up
 
 export const createCheckoutSession = async (req, res) => {
 	try {
@@ -141,3 +142,58 @@ async function createNewCoupon(userId) {
 
 	return newCoupon;
 }
+
+
+export const createRazorpayCheckoutSession = async (req, res) => {
+    try {
+        const { products, couponCode } = req.body;
+
+        if (!Array.isArray(products) || products.length === 0) {
+            return res.status(400).json({ error: "Invalid or empty products array" });
+        }
+
+        let totalAmount = 0;
+
+        products.forEach((product) => {
+            totalAmount += product.price * 100 * (product.quantity || 1); // Amount in paise
+        });
+
+        let coupon = null;
+        if (couponCode) {
+            coupon = await Coupon.findOne({ code: couponCode, userId: req.user._id, isActive: true });
+            if (coupon) {
+                totalAmount -= Math.round((totalAmount * coupon.discountPercentage) / 100);
+            }
+        }
+
+        const options = {
+            amount: totalAmount,
+            currency: "INR",
+            receipt: "order_rcptid_" + Math.floor(Math.random() * 1000000),
+            notes: {
+                userId: req.user._id.toString(),
+                couponCode: couponCode || "",
+                products: JSON.stringify(
+                    products.map((p) => ({
+                        id: p._id,
+                        quantity: p.quantity,
+                        price: p.price,
+                    }))
+                ),
+            },
+        };
+
+        const order = await razorpay.orders.create(options);
+
+        res.status(200).json({
+            id: order.id,
+            amount: order.amount / 100,
+            currency: order.currency,
+            receipt: order.receipt,
+            razorpayOrder: order,
+        });
+    } catch (error) {
+        console.error("Error processing Razorpay checkout:", error);
+        res.status(500).json({ message: "Error processing Razorpay checkout", error: error.message });
+    }
+};
